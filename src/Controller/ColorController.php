@@ -7,12 +7,11 @@ namespace App\Controller;
 use App\Entity\Color;
 use App\Repository\ColorRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use JMS\Serializer\SerializerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\HttpFoundation;
+use Symfony\Component\Serializer\SerializerInterface;
 
 /**
  * @Route("/colores")
@@ -37,38 +36,54 @@ class ColorController extends AbstractController
     }
 
     /**
-     * @Route("/", name="color_show_all")
+     * @Route("{page<\d+>?1{type<\w/>&json}", name="color_show_all", methods={"GET"})
      * @param ColorRepository $color
+     * @param Request $request
      * @return Response
      */
-    public function showAll(ColorRepository $color)
+    public function showAll(ColorRepository $color, Request $request)
     {
-        $colors = $color->findAllColor();
-        $data = $this->serializer->serialize($colors, 'json');
-
-        $response = new Response($data);
-        $response->headers->set('Content-Type', 'application/json');
-
-        return $response;
-
+        try {
+            $page = $request->query->get('page');
+            $type = $request->query->get('type');
+            if(is_null($page) || $page < 1) {
+                $page = 1;
+            }
+            $limit = 10;
+            $colors = $color->findAllColor($page, $limit);
+            if ($type === 'xml') {
+                $data = $this->serializer->serialize($colors, 'xml', ['attributes' => ['id', 'name', 'color']]);
+                $response = new Response($data,Response::HTTP_OK);
+                $response->headers->set('Content-Type', 'application/xml');
+            } else {
+                $data = $this->serializer->serialize($colors, 'json', ['attributes' => ['id', 'name', 'color']]);
+                $response = new Response($data,Response::HTTP_OK);
+                $response->headers->set('Content-Type', 'application/json');
+            }
+            return $response;
+        } catch (\Exception $exception) {
+            return new Response($exception->getMessage(), Response::HTTP_NOT_FOUND);
+        }
     }
 
 
     /**
-     * @Route("/{id}", name="color_show")
+     * @Route("/{id}", name="color_show", methods={"GET"})
      * @param Color $color
      * @return Response
-     * @throws \Exception
      */
     public function show(Color $color)
     {
+        try {
+            $data = $this->serializer->serialize($color, 'json');
 
-        $data = $this->serializer->serialize($color, 'json');
+            $response = new Response($data,Response::HTTP_OK);
+            $response->headers->set('Content-Type', 'application/json');
 
-        $response = new Response($data);
-        $response->headers->set('Content-Type', 'application/json');
-
-        return $response;
+            return $response;
+        } catch (\Exception $exception) {
+            return new Response($exception->getMessage(), Response::HTTP_NOT_FOUND);
+        }
     }
 
 
@@ -79,13 +94,17 @@ class ColorController extends AbstractController
      */
     public function create(Request $request)
     {
-        $data = $request->getContent();
-        $color = $this->serializer->deserialize($data, Color::class, 'json');
+        try {
+            $data = $request->getContent();
+            $color = $this->serializer->deserialize($data, Color::class, 'json');
 
-        $em = $this->em;
-        $em->persist($color);
-        $em->flush();
+            $em = $this->em;
+            $em->persist($color);
+            $em->flush();
 
-        return new Response('', Response::HTTP_CREATED);
+            return new Response('', Response::HTTP_CREATED);
+        } catch (\Exception $exception) {
+            return new Response($exception->getMessage(), Response::HTTP_NOT_FOUND);
+        }
     }
 }

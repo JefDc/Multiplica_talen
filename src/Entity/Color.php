@@ -23,7 +23,7 @@ class Color
     private $name;
 
     /**
-     * @ORM\Column(type="date")
+     * @ORM\Column(type="integer", length=4)
      */
     private $year;
 
@@ -54,17 +54,24 @@ class Color
         return $this;
     }
 
-    public function getYear(): ?\DateTimeInterface
+    /**
+     * @return mixed
+     */
+    public function getYear()
     {
         return $this->year;
     }
 
-    public function setYear(\DateTimeInterface $year): self
+    /**
+     * @param mixed $year
+     * @return Color
+     */
+    public function setYear($year)
     {
         $this->year = $year;
-
         return $this;
     }
+
 
     public function getColor(): ?string
     {

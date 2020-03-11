@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Color;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Persistence\ManagerRegistry;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 
 /**
  * @method Color|null find($id, $lockMode = null, $lockVersion = null)
@@ -19,45 +20,13 @@ class ColorRepository extends ServiceEntityRepository
         parent::__construct($registry, Color::class);
     }
 
-    public function findAllColor()
+    public function findAllColor($page, $limit)
     {
-        return $this->createQueryBuilder('c')
-            ->select([
-                'c.id',
-                'c.name',
-                'c.color'
-            ])
+        $query = $this->createQueryBuilder('c')
             ->getQuery()
-            ->getResult()
-            ;
-    }
+            ->setFirstResult(($page -1)* $limit)
+            ->setMaxResults($limit);
 
-    // /**
-    //  * @return Color[] Returns an array of Color objects
-    //  */
-    /*
-    public function findByExampleField($value)
-    {
-        return $this->createQueryBuilder('c')
-            ->andWhere('c.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('c.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
+        return new Paginator($query);
     }
-    */
-
-    /*
-    public function findOneBySomeField($value): ?Color
-    {
-        return $this->createQueryBuilder('c')
-            ->andWhere('c.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-    }
-    */
 }
