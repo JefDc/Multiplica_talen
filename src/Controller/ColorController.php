@@ -61,6 +61,7 @@ class ColorController extends AbstractController
                 $response->headers->set('Content-Type', 'application/json');
             }
             return $response;
+
         } catch (\Exception $exception) {
             return new Response($exception->getMessage(), Response::HTTP_NOT_FOUND);
         }
@@ -68,19 +69,29 @@ class ColorController extends AbstractController
 
 
     /**
-     * @Route("/{id}", name="color_show", methods={"GET"})
+     * @Route("/{id}{type<\w/>?json}", name="color_show", methods={"GET"})
      * @param Color $color
+     * @param Request $request
      * @return Response
      */
-    public function show(Color $color)
+    public function show(Color $color, Request $request)
     {
         try {
-            $data = $this->serializer->serialize($color, 'json');
+            $type = $request->query->get('type');
+            if ($type === 'xml') {
+                $data = $this->serializer->serialize($color, 'xml');
 
-            $response = new Response($data,Response::HTTP_OK);
-            $response->headers->set('Content-Type', 'application/json');
+                $response = new Response($data,Response::HTTP_OK);
+                $response->headers->set('Content-Type', 'application/xml');
+            } else {
+                $data = $this->serializer->serialize($color, 'json');
+
+                $response = new Response($data,Response::HTTP_OK);
+                $response->headers->set('Content-Type', 'application/json');
+            }
 
             return $response;
+
         } catch (\Exception $exception) {
             return new Response($exception->getMessage(), Response::HTTP_NOT_FOUND);
         }
@@ -103,6 +114,7 @@ class ColorController extends AbstractController
             $em->flush();
 
             return new Response('', Response::HTTP_CREATED);
+
         } catch (\Exception $exception) {
             return new Response($exception->getMessage(), Response::HTTP_NOT_FOUND);
         }
